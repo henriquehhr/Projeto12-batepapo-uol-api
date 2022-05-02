@@ -106,3 +106,31 @@ app.post("/messages", async (req, res) => {
         mongoClient.close();
     }
 });
+
+app.get("/messages", async (req, res) => {
+    const limit = req.query.limit ? parseInt(req.query.limit) : Number.POSITIVE_INFINITY;
+    const { user } = req.headers;
+
+    const mongoClient = new MongoClient(process.env.MONGO_URI);
+    try {
+        await mongoClient.connect();
+        const db = mongoClient.db("batePapoUOL");
+        const messages = await db.collection("messages").find().toArray();
+        let count = 0;
+        const filteredMessages = messages.filter((message) => {
+            if (message.type == "message" || message.type == "status" || (message.type == "private_message" && (message.to == user || message.from == user))) {
+                count++;
+                if (count == limit)
+                    messages.length = 0;
+                return true;
+            }
+            return false;
+        });
+        res.send(filteredMessages);
+        mongoClient.close();
+    } catch (e) {
+        console.log(e);
+        res.send(e);
+        mongoClient.close();
+    }
+});
