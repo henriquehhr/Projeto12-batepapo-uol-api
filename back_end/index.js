@@ -13,6 +13,33 @@ dotenv.config();
 
 app.listen(process.env.PORT, () => { console.log(chalk.bold.green(`Server live at http://localhost/${process.env.PORT}`)) });
 
+setInterval(async () => {
+    const mongoClient = new MongoClient(process.env.MONGO_URI);
+    try {
+        await mongoClient.connect();
+        const db = mongoClient.db("batePapoUOL");
+        const users = await db.collection("users").find().toArray();
+        const now = Date.now();
+        for (let user of users) {
+            if (now - user.lastStatus > 10000) {
+                console.log(user.name);
+                await db.collection("users").deleteOne({ name: user.name });
+                await db.collection("messages").insertOne({
+                    from: user.name,
+                    to: "Todos",
+                    text: "sai da sala...",
+                    type: "status",
+                    time: dayjs(now)
+                });
+            }
+        }
+    } catch (e) {
+        console.log(e);
+    } finally {
+        mongoClient.close();
+    }
+}, 15000);
+
 app.post("/participants", async (req, res) => { //TODO verificar se posso enviar mais propriedades além do nome no body
     const { name } = req.body;
     const userSchema = joi.object({
@@ -137,7 +164,6 @@ app.get("/messages", async (req, res) => { //TODO as mensagens de status contam 
 
 app.post("/status", async (req, res) => {
     const { user } = req.headers;
-
 
     const mongoClient = new MongoClient(process.env.MONGO_URI);
     try {
