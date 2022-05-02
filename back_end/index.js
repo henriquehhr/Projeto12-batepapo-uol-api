@@ -107,7 +107,7 @@ app.post("/messages", async (req, res) => {
     }
 });
 
-app.get("/messages", async (req, res) => {
+app.get("/messages", async (req, res) => { //TODO as mensagens de status contam no limite?
     const limit = req.query.limit ? parseInt(req.query.limit) : Number.POSITIVE_INFINITY;
     const { user } = req.headers;
 
@@ -131,6 +131,29 @@ app.get("/messages", async (req, res) => {
     } catch (e) {
         console.log(e);
         res.send(e);
+        mongoClient.close();
+    }
+});
+
+app.post("/status", async (req, res) => {
+    const { user } = req.headers;
+
+
+    const mongoClient = new MongoClient(process.env.MONGO_URI);
+    try {
+        await mongoClient.connect();
+        const db = mongoClient.db("batePapoUOL");
+        if (!await db.collection("users").findOne({ name: user })) {
+            res.sendStatus(404);
+            mongoClient.close();
+            return;
+        }
+        await db.collection("users").updateOne({ name: user }, { $set: { lastStatus: Date.now() } });
+        res.sendStatus(200);
+        mongoClient.close();
+    } catch (e) {
+        console.log(e);
+        res.sendStatus(e);
         mongoClient.close();
     }
 });
