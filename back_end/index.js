@@ -51,3 +51,18 @@ app.post("/participants", async (req, res) => { //TODO verificar se posso enviar
         mongoClient.close();
     }
 });
+
+app.get("/participants", async (req, res) => { //TODO retornar o objeto do usuáio inteiro, junto do "lastStatus" ?
+    const mongoClient = new MongoClient(process.env.MONGO_URI);
+    try {
+        await mongoClient.connect();
+        const db = mongoClient.db("batePapoUOL");
+        const users = await db.collection("users").find().toArray();
+        res.send(users);
+        mongoClient.close();
+    } catch (e) {
+        console.log(e);
+        res.send(e);
+        mongoClient.close();
+    }
+});
