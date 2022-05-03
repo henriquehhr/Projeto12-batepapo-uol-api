@@ -29,7 +29,7 @@ setInterval(async () => {
                     to: "Todos",
                     text: "sai da sala...",
                     type: "status",
-                    time: dayjs(now)
+                    time: dayjs(now).format("HH:MM:SS")
                 });
             }
         }
@@ -68,7 +68,7 @@ app.post("/participants", async (req, res) => { //TODO verificar se posso enviar
             to: "Todos",
             text: "entra na sala...",
             type: "status",
-            time: dayjs(now) //TODO confirmar o formato da data
+            time: dayjs(now).format("HH:MM:SS") //TODO confirmar o formato da data
         });
         res.sendStatus(201);
         mongoClient.close();
@@ -123,7 +123,7 @@ app.post("/messages", async (req, res) => {
         await db.collection("messages").insertOne({
             ...body,
             from,
-            time: dayjs(new Date())
+            time: dayjs(Date.now()).format("HH:MM:SS")
         });
         res.sendStatus(201);
         mongoClient.close();
