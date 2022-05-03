@@ -4,14 +4,13 @@ import { MongoClient } from "mongodb";
 import joi from "joi";
 import dayjs from "dayjs";
 import dotenv from "dotenv";
-import chalk from "chalk";
 
 const app = express();
 app.use(json());
 app.use(cors());
 dotenv.config();
 
-app.listen(process.env.PORT, () => { console.log(chalk.bold.green(`Server live at http://localhost/${process.env.PORT}`)) });
+app.listen(process.env.PORT, () => { console.log(`Server live at http://localhost/${process.env.PORT}`) });
 
 setInterval(async () => {
     const mongoClient = new MongoClient(process.env.MONGO_URI);
