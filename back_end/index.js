@@ -22,14 +22,13 @@ setInterval(async () => {
         const now = Date.now();
         for (let user of users) {
             if (now - user.lastStatus > 10000) {
-                console.log(user.name);
                 await db.collection("users").deleteOne({ name: user.name });
                 await db.collection("messages").insertOne({
                     from: user.name,
                     to: "Todos",
                     text: "sai da sala...",
                     type: "status",
-                    time: dayjs(now).format("HH:MM:SS")
+                    time: dayjs(now).format("HH:mm:ss")
                 });
             }
         }
@@ -68,7 +67,7 @@ app.post("/participants", async (req, res) => { //TODO verificar se posso enviar
             to: "Todos",
             text: "entra na sala...",
             type: "status",
-            time: dayjs(now).format("HH:MM:SS") //TODO confirmar o formato da data
+            time: dayjs(now).format("HH:mm:ss") //TODO confirmar o formato da data
         });
         res.sendStatus(201);
         mongoClient.close();
@@ -123,7 +122,7 @@ app.post("/messages", async (req, res) => {
         await db.collection("messages").insertOne({
             ...body,
             from,
-            time: dayjs(Date.now()).format("HH:MM:SS")
+            time: dayjs(Date.now()).format("HH:mm:ss")
         });
         res.sendStatus(201);
         mongoClient.close();
