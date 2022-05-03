@@ -39,7 +39,7 @@ setInterval(async () => {
     }
 }, 15000);
 
-app.post("/participants", async (req, res) => { //TODO verificar se posso enviar mais propriedades além do nome no body
+app.post("/participants", async (req, res) => {
     const { name } = req.body;
     const userSchema = joi.object({
         name: joi.string().required()
@@ -67,7 +67,7 @@ app.post("/participants", async (req, res) => { //TODO verificar se posso enviar
             to: "Todos",
             text: "entra na sala...",
             type: "status",
-            time: dayjs(now).format("HH:mm:ss") //TODO confirmar o formato da data
+            time: dayjs(now).format("HH:mm:ss")
         });
         res.sendStatus(201);
         mongoClient.close();
@@ -78,7 +78,7 @@ app.post("/participants", async (req, res) => { //TODO verificar se posso enviar
     }
 });
 
-app.get("/participants", async (req, res) => { //TODO retornar o objeto do usuáio inteiro, junto do "lastStatus" ?
+app.get("/participants", async (req, res) => {
     const mongoClient = new MongoClient(process.env.MONGO_URI);
     try {
         await mongoClient.connect();
@@ -133,25 +133,28 @@ app.post("/messages", async (req, res) => {
     }
 });
 
-app.get("/messages", async (req, res) => { //TODO as mensagens de status contam no limite?
-    const limit = req.query.limit ? parseInt(req.query.limit) : Number.POSITIVE_INFINITY;
+app.get("/messages", async (req, res) => {
+    const { limit } = req.query;
     const { user } = req.headers;
-
     const mongoClient = new MongoClient(process.env.MONGO_URI);
     try {
+        const filter = {
+            $or: [
+                { "to": 'Todos' },
+                { "from": user },
+                { "type": "message" },
+                { "to": user, "type": "private_message" }
+            ]
+        };
         await mongoClient.connect();
         const db = mongoClient.db("batePapoUOL");
-        const messages = await db.collection("messages").find().toArray();
-        let count = 0;
-        const filteredMessages = messages.filter((message) => {
-            if (message.type == "message" || message.type == "status" || (message.type == "private_message" && (message.to == user || message.from == user))) {
-                count++;
-                if (count == limit)
-                    messages.length = 0;
-                return true;
-            }
-            return false;
-        });
+        if (!parseInt(limit)) {
+            const messages = await db.collection("messages").find(filter).toArray();
+            res.send(messages);
+            mongoClient.close();
+            return;
+        }
+        const filteredMessages = await db.collection("messages").find(filter).limit(parseInt(limit)).toArray();
         res.send(filteredMessages);
         mongoClient.close();
     } catch (e) {
